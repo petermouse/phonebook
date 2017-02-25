@@ -30,4 +30,14 @@ typedef struct __PHONE_BOOK_ENTRY {
 entry *findName(char lastName[], entry *pHead);
 entry *append(char lastName[], entry *e);
 
+/* binary search tree implementation */
+typedef struct __TREE_NODE {
+    entry *pbEntry;
+    struct __TREE_NODE *left;
+    struct __TREE_NODE *right;
+} node;
+
+node *buildBST (entry **head, int n);
+entry *findNameByBST(char lastName[], node *root);
+
 #endif

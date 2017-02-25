@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
     char line[MAX_LAST_NAME_SIZE];
     struct timespec start, end;
     double cpu_time1, cpu_time2;
+    int wordCount = 0;
 
     /* check file opening */
     fp = fopen(DICT_FILE, "r");
@@ -54,12 +55,20 @@ int main(int argc, char *argv[])
 #endif
     clock_gettime(CLOCK_REALTIME, &start);
     while (fgets(line, sizeof(line), fp)) {
+        wordCount++;
         while (line[i] != '\0')
             i++;
         line[i - 1] = '\0';
         i = 0;
         e = append(line, e);
     }
+
+#ifdef OPT
+    /* binary search tree implementation */
+    e = pHead;
+    node *root = buildBST(&e, wordCount);
+#endif
+
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time1 = diff_in_second(start, end);
 
@@ -81,7 +90,12 @@ int main(int argc, char *argv[])
 #endif
     /* compute the execution time */
     clock_gettime(CLOCK_REALTIME, &start);
+#ifndef OPT
     findName(input, e);
+#else
+    /* binary search tree implementation*/
+    findNameByBST(input, root);
+#endif
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time2 = diff_in_second(start, end);
 
