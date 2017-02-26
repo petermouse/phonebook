@@ -5,10 +5,11 @@
 *.list
 *.swp
 *.bak
+*.txt
 phonebook_opt
 phonebook_orig
+phonebook_reduce
+phonebook_bst
+phonebook_hash
 calculate
-orig.txt
-opt.txt
-output.txt
 runtime.png

@@ -51,3 +51,28 @@ entry *findNameByBST(char lastName[], node *root)
         return findNameByBST(lastName, root->right);
     return NULL;
 }
+
+/* hash function implementation */
+unsigned long djb2_hash(char *str)
+{
+    unsigned long hash = 5381;
+    int c;
+    while ((c = *str++))
+        hash = ((hash << 5) + hash) + c;
+
+    return hash % HASH_TABLE_SIZE;
+}
+
+entry *insertFront(char lastName[],entry* e)
+{
+    entry *pHead = (entry *) malloc(sizeof(entry));
+    strcpy(e->lastName, lastName);
+    pHead->pNext = e;
+    return pHead;
+}
+
+entry *findNameByHash(char lastName[], entry **table)
+{
+    int hashValue = djb2_hash(lastName);
+    return findName(lastName, table[hashValue]);
+}

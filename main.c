@@ -6,8 +6,12 @@
 
 #include IMPL
 
-#ifdef OPT
-#define OUT_FILE "opt.txt"
+#if defined(BST)
+#define OUT_FILE "bst.txt"
+#elif defined(HASH)
+#define OUT_FILE "hash.txt"
+#elif defined(REDUCE)
+#define OUT_FILE "reduce.txt"
 #else
 #define OUT_FILE "orig.txt"
 #endif
@@ -43,6 +47,15 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+#if defined(HASH)
+    int hashValue;
+    entry **hashTable = (entry **) malloc(sizeof(entry *) * HASH_TABLE_SIZE);
+    for (int i = 0; i < HASH_TABLE_SIZE; i++) {
+        hashTable[i] = (entry *) malloc(sizeof(entry));
+        hashTable[i]->pNext = NULL;
+    }
+#endif
+
     /* build the entry */
     entry *pHead, *e;
     pHead = (entry *) malloc(sizeof(entry));
@@ -60,10 +73,17 @@ int main(int argc, char *argv[])
             i++;
         line[i - 1] = '\0';
         i = 0;
+#if defined(HASH)
+        /* hash function implementation*/
+        hashValue = djb2_hash(line);
+        e = hashTable[hashValue];
+        hashTable[hashValue] = insertFront(line, e);
+#else
         e = append(line, e);
+#endif
     }
 
-#ifdef OPT
+#if defined(BST)
     /* binary search tree implementation */
     e = pHead;
     node *root = buildBST(&e, wordCount);
@@ -81,21 +101,27 @@ int main(int argc, char *argv[])
     char input[MAX_LAST_NAME_SIZE] = "zyxel";
     e = pHead;
 
-    assert(findName(input, e) &&
-           "Did you implement findName() in " IMPL "?");
-    assert(0 == strcmp(findName(input, e)->lastName, "zyxel"));
+    //assert(findName(input, e) &&
+    //    "Did you implement findName() in " IMPL "?");
+    //assert(0 == strcmp(findName(input, e)->lastName, "zyxel"));
 
 #if defined(__GNUC__)
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
 #endif
     /* compute the execution time */
     clock_gettime(CLOCK_REALTIME, &start);
-#ifndef OPT
-    findName(input, e);
-#else
-    /* binary search tree implementation*/
+
+#if defined(BST)
+    /* binary search tree implementation */
     findNameByBST(input, root);
+#elif defined(HASH)
+    /* hash function implementation */
+    findNameByHash(input, hashTable);
+#else
+    /* orig and reduce version will fall into here */
+    findName(input, e);
 #endif
+
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time2 = diff_in_second(start, end);
 

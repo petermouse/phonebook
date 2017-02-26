@@ -8,6 +8,7 @@
 
 #define MAX_LAST_NAME_SIZE 16
 #define OPT 1
+#define HASH_TABLE_SIZE 50021
 
 typedef struct __PHONE_BOOK_DATA {
     char firstName[16];
@@ -24,7 +25,7 @@ typedef struct __PHONE_BOOK_DATA {
 typedef struct __PHONE_BOOK_ENTRY {
     char lastName[MAX_LAST_NAME_SIZE];
     struct __PHONE_BOOK_ENTRY *pNext;
-    data *info;
+    data *pData;
 } entry;
 
 entry *findName(char lastName[], entry *pHead);
@@ -39,5 +40,10 @@ typedef struct __TREE_NODE {
 
 node *buildBST (entry **head, int n);
 entry *findNameByBST(char lastName[], node *root);
+
+/* hash function implementation */
+unsigned long djb2_hash(char *str);
+entry *insertFront(char lastName[], entry *e);
+entry *findNameByHash(char lastName[], entry **table);
 
 #endif

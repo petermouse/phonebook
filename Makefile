@@ -3,7 +3,8 @@ CFLAGS_common ?= -Wall -std=gnu99
 CFLAGS_orig = -O0
 CFLAGS_opt  = -O0
 
-EXEC = phonebook_orig phonebook_opt
+#EXEC = phonebook_orig phonebook_opt
+EXEC = phonebook_orig phonebook_reduce phonebook_bst phonebook_hash
 
 GIT_HOOKS := .git/hooks/pre-commit
 .PHONY: all
@@ -20,10 +21,25 @@ phonebook_orig: $(SRCS_common) phonebook_orig.c phonebook_orig.h
 		-DIMPL="\"$@.h\"" -o $@ \
 		$(SRCS_common) $@.c
 
-phonebook_opt: $(SRCS_common) phonebook_opt.c phonebook_opt.h
+#phonebook_opt: $(SRCS_common) phonebook_opt.c phonebook_opt.h
+#	$(CC) $(CFLAGS_common) $(CFLAGS_opt) \
+#		-DIMPL="\"$@.h\"" -o $@ \
+#		$(SRCS_common) $@.c
+
+phonebook_reduce: $(SRCS_common) phonebook_opt.c phonebook_opt.h
 	$(CC) $(CFLAGS_common) $(CFLAGS_opt) \
-		-DIMPL="\"$@.h\"" -o $@ \
-		$(SRCS_common) $@.c
+		-DREDUCE -DIMPL="\"phonebook_opt.h\"" -o $@ \
+		$(SRCS_common) phonebook_opt.c
+
+phonebook_bst: $(SRCS_common) phonebook_opt.c phonebook_opt.h
+	$(CC) $(CFLAGS_common) $(CFLAGS_opt) \
+		-DBST -DIMPL="\"phonebook_opt.h\"" -o $@ \
+		$(SRCS_common) phonebook_opt.c
+
+phonebook_hash: $(SRCS_common) phonebook_opt.c phonebook_opt.h
+	$(CC) $(CFLAGS_common) $(CFLAGS_opt) \
+		-DHASH -DIMPL="\"phonebook_opt.h\"" -o $@ \
+		$(SRCS_common) phonebook_opt.c
 
 run: $(EXEC)
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
@@ -35,8 +51,13 @@ cache-test: $(EXEC)
 		./phonebook_orig
 	perf stat --repeat 100 \
 		-e cache-misses,cache-references,instructions,cycles \
-		./phonebook_opt
-
+		./phonebook_reduce
+	perf stat --repeat 100 \
+		-e cache-misses,cache-references,instructions,cycles \
+		./phonebook_bst
+	perf stat --repeat 100 \
+		-e cache-misses,cache-references,instructions,cycles \
+		./phonebook_hash
 output.txt: cache-test calculate
 	./calculate
 
@@ -48,5 +69,5 @@ calculate: calculate.c
 
 .PHONY: clean
 clean:
-	$(RM) $(EXEC) *.o perf.* \
-	      	calculate orig.txt opt.txt output.txt runtime.png
+	$(RM) $(EXEC) *.o perf.* *.txt \
+	      	calculate runtime.png
