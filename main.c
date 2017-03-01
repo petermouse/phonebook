@@ -16,6 +16,7 @@
 #define OUT_FILE "orig.txt"
 #endif
 
+#define INPUT_FILE "random.txt"
 #define DICT_FILE "./dictionary/words.txt"
 
 static double diff_in_second(struct timespec t1, struct timespec t2)
@@ -33,7 +34,7 @@ static double diff_in_second(struct timespec t1, struct timespec t2)
 
 int main(int argc, char *argv[])
 {
-    FILE *fp;
+    FILE *fp,*input;
     int i = 0;
     char line[MAX_LAST_NAME_SIZE];
     struct timespec start, end;
@@ -44,6 +45,13 @@ int main(int argc, char *argv[])
     fp = fopen(DICT_FILE, "r");
     if (fp == NULL) {
         printf("cannot open the file\n");
+        return -1;
+    }
+
+    input = fopen(INPUT_FILE, "r");
+    if (input == NULL) {
+        printf("cannot open the input file\n");
+        fclose(fp);
         return -1;
     }
 
@@ -86,6 +94,8 @@ int main(int argc, char *argv[])
 #if defined(BST)
     /* binary search tree implementation */
     e = pHead;
+    if(e)
+        e = e->pNext;
     node *root = buildBST(&e, wordCount);
 #endif
 
@@ -95,15 +105,24 @@ int main(int argc, char *argv[])
     /* close file as soon as possible */
     fclose(fp);
 
-    e = pHead;
-
     /* the givn last name to find */
-    char input[MAX_LAST_NAME_SIZE] = "zyxel";
+    char lastName[MAX_LAST_NAME_SIZE] = "zzzzzzzz";
     e = pHead;
 
-    //assert(findName(input, e) &&
-    //    "Did you implement findName() in " IMPL "?");
-    //assert(0 == strcmp(findName(input, e)->lastName, "zyxel"));
+
+#if defined(BST)
+    assert(findNameByBST(lastName, root) &&
+           "Did you implement findName() in " IMPL "?");
+    assert(0 == strcmp(findNameByBST(lastName, root)->lastName, "zzzzzzzz"));
+#elif defined(HASH)
+    assert(findNameByHash(lastName, hashTable) &&
+           "Did you implement findName() in " IMPL "?");
+    assert(0 == strcmp(findNameByHash(lastName, hashTable)->lastName, "zzzzzzzz"));
+#else
+    assert(findName(lastName, e) &&
+           "Did you implement findName() in " IMPL "?");
+    assert(0 == strcmp(findName(lastName, e)->lastName, "zzzzzzzz"));
+#endif
 
 #if defined(__GNUC__)
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
@@ -111,22 +130,27 @@ int main(int argc, char *argv[])
     /* compute the execution time */
     clock_gettime(CLOCK_REALTIME, &start);
 
+    while (fscanf(input, " %s", lastName) != EOF) {
+
 #if defined(BST)
-    /* binary search tree implementation */
-    findNameByBST(input, root);
+        /* binary search tree implementation */
+        findNameByBST(lastName, root);
 #elif defined(HASH)
-    /* hash function implementation */
-    findNameByHash(input, hashTable);
+        /* hash function implementation */
+        findNameByHash(lastName, hashTable);
 #else
-    /* orig and reduce version will fall into here */
-    findName(input, e);
+        /* orig and reduce version will fall into here */
+        findName(lastName, e);
 #endif
+
+    }
 
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time2 = diff_in_second(start, end);
 
     FILE *output = fopen(OUT_FILE, "a");
     fprintf(output, "append() findName() %lf %lf\n", cpu_time1, cpu_time2);
+    fclose(input);
     fclose(output);
 
     printf("execution time of append() : %lf sec\n", cpu_time1);

@@ -2,8 +2,9 @@ CC ?= gcc
 CFLAGS_common ?= -Wall -std=gnu99
 CFLAGS_orig = -O0
 CFLAGS_opt  = -O0
+INPUT = random.txt
+INPUT_SIZE ?= 100
 
-#EXEC = phonebook_orig phonebook_opt
 EXEC = phonebook_orig phonebook_reduce phonebook_bst phonebook_hash
 
 GIT_HOOKS := .git/hooks/pre-commit
@@ -20,11 +21,6 @@ phonebook_orig: $(SRCS_common) phonebook_orig.c phonebook_orig.h
 	$(CC) $(CFLAGS_common) $(CFLAGS_orig) \
 		-DIMPL="\"$@.h\"" -o $@ \
 		$(SRCS_common) $@.c
-
-#phonebook_opt: $(SRCS_common) phonebook_opt.c phonebook_opt.h
-#	$(CC) $(CFLAGS_common) $(CFLAGS_opt) \
-#		-DIMPL="\"$@.h\"" -o $@ \
-#		$(SRCS_common) $@.c
 
 phonebook_reduce: $(SRCS_common) phonebook_opt.c phonebook_opt.h
 	$(CC) $(CFLAGS_common) $(CFLAGS_opt) \
@@ -45,7 +41,7 @@ run: $(EXEC)
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	watch -d -t "./phonebook_orig && echo 3 | sudo tee /proc/sys/vm/drop_caches"
 
-cache-test: $(EXEC)
+cache-test: $(EXEC) $(INPUT)
 	perf stat --repeat 100 \
 		-e cache-misses,cache-references,instructions,cycles \
 		./phonebook_orig
@@ -58,8 +54,12 @@ cache-test: $(EXEC)
 	perf stat --repeat 100 \
 		-e cache-misses,cache-references,instructions,cycles \
 		./phonebook_hash
+
 output.txt: cache-test calculate
 	./calculate
+
+random.txt: dictionary/words.txt
+	shuf -n $(INPUT_SIZE) ./dictionary/words.txt > random.txt
 
 plot: output.txt
 	gnuplot scripts/runtime.gp
