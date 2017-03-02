@@ -25,7 +25,7 @@ typedef struct __PHONE_BOOK_DATA {
 typedef struct __PHONE_BOOK_ENTRY {
     char lastName[MAX_LAST_NAME_SIZE];
     struct __PHONE_BOOK_ENTRY *pNext;
-    data *pData;
+    data *dataEntry;
 } entry;
 
 entry *findName(char lastName[], entry *pHead);
